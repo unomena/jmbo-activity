@@ -1,0 +1,10 @@
+include AUTHORS.rst
+include CHANGELOG.rst
+include README.rst
+recursive-include activity/fixtures *
+recursive-include activity/locale *
+recursive-include activity/management *
+recursive-include activity/migrations *
+recursive-include activity/static *
+recursive-include activity/templates *
+recursive-include activity/templatetags *
