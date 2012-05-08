@@ -8,9 +8,11 @@ import datetime
 from django.db import models
 from django.db.models.signals import post_save
 
+from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
+from django.utils.translation import ugettext_lazy as _, ugettext
 
 from photologue.models import ImageModel
 from foundry.models import Member
@@ -64,9 +66,10 @@ class UserActivity(models.Model):
         return '%s - %s' % (unicode(self.user), unicode(self.get_activity_display()))
     
     @staticmethod
-    def track_activity(user, activity, content_object=None, image_object=None, points_override=None):
+    def track_activity(user, activity, sub=None, content_object=None, image_object=None, points_override=None):
         kwargs = {'user'  :user, 
                   'activity' : activity,
+                  'sub': sub,
                   }
         
         if content_object:
@@ -83,6 +86,55 @@ class UserActivity(models.Model):
             kwargs.update({'points_override' : points_override})
             
         UserActivity.objects.create(**kwargs)
+    
+    @staticmethod
+    def add_blog_post(blog_post):
+        UserActivity.track_activity(user=blog_post.owner,
+                                    activity=ugettext('You added a <a href="%s">Blog Post</a>' % blog_post.get_absolute_url()),
+                                    sub=blog_post.title,
+                                    content_object=blog_post,
+                                    image_object=blog_post.owner.member)
+    
+    @staticmethod
+    def add_gallery(gallery):
+        UserActivity.track_activity(user=gallery.owner,
+                                    activity=ugettext('You added a <a href="%s">Gallery</a>' % gallery.get_absolute_url()),
+                                    sub=gallery.title,
+                                    content_object=gallery,
+                                    image_object=gallery.owner.member)
+    
+    @staticmethod
+    def add_image(image):
+        UserActivity.track_activity(user=image.owner,
+                                    activity=ugettext('You added a <a href="%s">Image</a>' % image.get_absolute_url()),
+                                    sub=image.title,
+                                    content_object=image,
+                                    image_object=image.owner.member)
+    
+    @staticmethod
+    def accept_friend_request(member_friend):
+        UserActivity.track_activity(user=member_friend.friend,
+                                    activity=ugettext('You accepted a Friend Request from <a href="%s">%s</a>' % (reverse('member-detail', args=[member_friend.member.username]), member_friend.member)),
+                                    content_object=member_friend,
+                                    image_object=member_friend.member)
+        
+        UserActivity.track_activity(user=member_friend.member,
+                                    activity=ugettext('Your friend <a href="%s">%s</a> accepted your Friend Request. ' % (reverse('member-detail', args=[member_friend.friend.username]), member_friend.friend)),
+                                    content_object=member_friend,
+                                    image_object=member_friend.friend)
+    
+    @staticmethod
+    def add_comment(comment):
+        UserActivity.track_activity(user=comment.user,
+                                    activity=ugettext('You added a <a href="%s">comment</a>' % comment.content_object.get_absolute_url()),
+                                    sub=comment.comment,
+                                    content_object=comment,
+                                    image_object=comment.user)
+    
+    @staticmethod
+    def add_share(user, link, medium):
+        UserActivity.track_activity(user=user,
+                                    activity=ugettext('You shared <a href="%s">%s</a> via %s' % (link, link, medium)))
         
 def post_save_user_activity(sender, instance, created, **kwargs):
     """Handler for UserActvity post save."""
