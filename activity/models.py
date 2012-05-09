@@ -15,7 +15,6 @@ from django.contrib.contenttypes import generic
 from django.utils.translation import ugettext_lazy as _, ugettext
 
 from photologue.models import ImageModel
-from foundry.models import Member
 from activity import constants
 
 class PointsActivity(models.Model):
@@ -43,7 +42,7 @@ class UserActivity(models.Model):
     """
     user = models.ForeignKey(User)
     activity = models.PositiveSmallIntegerField(choices=constants.ACTIVITY_CHOICES)
-    sub = models.CharField(max_length=128, null=True, blank=True)
+    sub = models.TextField(null=True, blank=True)
     
     content_content_type = models.ForeignKey(ContentType,
                                              related_name='user_activity_content_object',
@@ -67,6 +66,9 @@ class UserActivity(models.Model):
     
     @staticmethod
     def track_activity(user, activity, sub=None, content_object=None, image_object=None, points_override=None):
+        from django.contrib.contenttypes.models import ContentType
+        from activity.models import UserActivity
+        
         kwargs = {'user'  :user, 
                   'activity' : activity,
                   'sub': sub,
@@ -87,54 +89,23 @@ class UserActivity(models.Model):
             
         UserActivity.objects.create(**kwargs)
     
-    @staticmethod
-    def add_blog_post(blog_post):
-        UserActivity.track_activity(user=blog_post.owner,
-                                    activity=ugettext('You added a <a href="%s">Blog Post</a>' % blog_post.get_absolute_url()),
-                                    sub=blog_post.title,
-                                    content_object=blog_post,
-                                    image_object=blog_post.owner.member)
-    
-    @staticmethod
-    def add_gallery(gallery):
-        UserActivity.track_activity(user=gallery.owner,
-                                    activity=ugettext('You added a <a href="%s">Gallery</a>' % gallery.get_absolute_url()),
-                                    sub=gallery.title,
-                                    content_object=gallery,
-                                    image_object=gallery.owner.member)
-    
-    @staticmethod
-    def add_image(image):
-        UserActivity.track_activity(user=image.owner,
-                                    activity=ugettext('You added a <a href="%s">Image</a>' % image.get_absolute_url()),
-                                    sub=image.title,
-                                    content_object=image,
-                                    image_object=image.owner.member)
-    
-    @staticmethod
-    def accept_friend_request(member_friend):
-        UserActivity.track_activity(user=member_friend.friend,
-                                    activity=ugettext('You accepted a Friend Request from <a href="%s">%s</a>' % (reverse('member-detail', args=[member_friend.member.username]), member_friend.member)),
-                                    content_object=member_friend,
-                                    image_object=member_friend.member)
-        
-        UserActivity.track_activity(user=member_friend.member,
-                                    activity=ugettext('Your friend <a href="%s">%s</a> accepted your Friend Request. ' % (reverse('member-detail', args=[member_friend.friend.username]), member_friend.friend)),
-                                    content_object=member_friend,
-                                    image_object=member_friend.friend)
-    
-    @staticmethod
-    def add_comment(comment):
-        UserActivity.track_activity(user=comment.user,
-                                    activity=ugettext('You added a <a href="%s">comment</a>' % comment.content_object.get_absolute_url()),
-                                    sub=comment.comment,
-                                    content_object=comment,
-                                    image_object=comment.user)
-    
-    @staticmethod
-    def add_share(user, link, medium):
-        UserActivity.track_activity(user=user,
-                                    activity=ugettext('You shared <a href="%s">%s</a> via %s' % (link, link, medium)))
+#    @staticmethod
+#    def add_gallery(gallery):
+#        UserActivity.track_activity(user=gallery.owner,
+#                                    activity=ugettext('You added a <a href="%s">Gallery</a>' % gallery.get_absolute_url()),
+#                                    sub=gallery.title,
+#                                    content_object=gallery,
+#                                    image_object=gallery.owner.member)
+#    
+#    @staticmethod
+#    def add_image(image):
+#        UserActivity.track_activity(user=image.owner,
+#                                    activity=ugettext('You added a <a href="%s">Image</a>' % image.get_absolute_url()),
+#                                    sub=image.title,
+#                                    content_object=image,
+#                                    image_object=image.owner.member)
+
+
         
 def post_save_user_activity(sender, instance, created, **kwargs):
     """Handler for UserActvity post save."""
@@ -185,6 +156,7 @@ class Badge(ImageModel):
                                  self.get_activity_display())
         
 class MemberBadge(models.Model):
+    from foundry.models import Member
     member = models.ForeignKey(Member)
     badge = models.ForeignKey(Badge)
     created = models.DateTimeField(auto_now_add=True)
