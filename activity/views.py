@@ -4,6 +4,7 @@ Created on 09 May 2012
 @author: euan
 '''
 from django.views.generic import ListView, TemplateView
+from django.utils.translation import ugettext_lazy as _, ugettext
 
 from foundry import models as foundry_models
 from activity import constants, models
