@@ -15,6 +15,7 @@ from django.contrib.contenttypes import generic
 from django.utils.translation import ugettext_lazy as _, ugettext
 
 from photologue.models import ImageModel
+from foundry.models import Member
 from activity import constants
 
 class PointsActivity(models.Model):
@@ -156,7 +157,6 @@ class Badge(ImageModel):
                                  self.get_activity_display())
         
 class MemberBadge(models.Model):
-    from foundry.models import Member
     member = models.ForeignKey(Member)
     badge = models.ForeignKey(Badge)
     created = models.DateTimeField(auto_now_add=True)
