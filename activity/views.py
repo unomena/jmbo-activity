@@ -44,7 +44,7 @@ class MyBadges(TemplateView):
                 badge_groups.append(badge_group)
 
         link, dc = foundry_models.Link.objects.get_or_create(
-            title='You have been awarded a new badge.', view_name='my-badges'
+            title=ugettext("You have earned a new badge"), view_name='my-badges'
         )
         foundry_models.Notification.objects.filter(member=self.request.user.member, link=link).delete()
 
