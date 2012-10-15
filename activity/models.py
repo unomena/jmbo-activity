@@ -141,12 +141,18 @@ def post_save_user(sender, instance, created, **kwargs):
     
 post_save.connect(post_save_user_activity, sender=UserActivity)
 
-class Badge(ImageModel):
+class BadgeGreyImage(ImageModel):
+    title = models.CharField(max_length=32, unique=True)
     
+    def __str__(self):
+        return self.title
+
+class Badge(ImageModel):
     title = models.CharField(max_length=32, unique=True)
     activity = models.PositiveSmallIntegerField(choices=constants.ACTIVITY_CHOICES)
     threshold = models.PositiveSmallIntegerField(default=1)
     description = models.TextField(null=True, blank=True)
+    grey_image = models.ForeignKey(BadgeGreyImage, null=True, blank=True)
     
     class Meta:
         unique_together = (('activity', 'threshold'),)
